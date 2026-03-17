@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seating Visualizer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #bfefff, #d9f4ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #0f172a;
+    }
+
+    /* ---------- HEADER ---------- */
+    .header {
+      text-align: center;
+      padding: 30px 20px 10px;
+    }
+
+    .logo {
+    width: 140px;        /* mobile-friendly */
+    max-width: 40vw;
+    height: auto;
+    margin-bottom: 12px;
+}
+
+
+    .title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: #2563eb;
+      margin-top: 6px;
+    }
+
+    .college {
+      font-size: 0.95rem;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      color: #2f4b8d; /* darker */
+      font-weight: 500; /* bold */
+    }
+
+    /* ---------- CARD ---------- */
+    .card {
+      margin-top: 40px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      width: 92%;
+      max-width: 420px;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      margin: 0;
+      text-align: center;
+      font-size: 1.5rem;
+      color: #1e3a8a;
+    }
+
+    .card p {
+      text-align: center;
+      margin: 8px 0 20px;
+      color: #475569;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      border-radius: 12px;
+      border: 1.5px solid #cbd5f5;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: white;
+      background: #3574b6;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e5fa3;
+    }
+
+    #result {
+      margin-top: 22px;
+    }
+
+    .results {
+      display: flex;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .session-box {
+      flex: 1;
+      border-radius: 14px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
+    }
+
+    .session-title {
+      text-align: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #1e3a8a;
+    }
+
+    .session-box p {
+      margin: 6px 0;
+      font-weight: 600;
+    }
+
+    .error {
+      text-align: center;
+      font-weight: 700;
+      color: red;
+    }
+
+    /* ---------- FOOTER ---------- */
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      font-weight: 600;
+      color: #1e3a8a;
+    }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 600px) {
+      .results {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <!-- replace src with your real logo -->
+    <img src="/static/\....png" class="logo" alt="KCLAS Logo">
+    <h1 class="title">  Hall Allocation System</h1>
+    <div class="subtitle">Department of Data Science</div>
+    <div class="college">KCLAS</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+    <h2>Find Your Seat</h2>
+    <p>  </p>
+
+    <input id="reg" placeholder="Enter your registeration number." />
+    <button onclick="findSeat()">Find 🔍</button>
+
+    <div id="result"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    Made by the Department of Data Science
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

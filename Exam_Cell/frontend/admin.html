@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Exam Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { primary: '#003594', 'primary-dark': '#00266b' } }
+            }
+        }
+    </script>
+    <style>
+        .hidden {
+            display: none !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #7be7ff 0%, #E6F0FF 100%) fixed !important;
+        }
+
+        th,
+        td {
+            padding: 1.25rem 1rem !important;
+        }
+    </style>
+    <script>
+            // Auth guard — redirect to login if not authenticated as admin
+            (function () {
+                const token = sessionStorage.getItem('auth_token');
+                const role = sessionStorage.getItem('auth_role');
+                if (!token || role !== 'admin') {
+                    window.location.href = '/login';
+                }
+            })();
+    </script>
+</head>
+
+<body
+    class="bg-gradient-to-br from-sky-100 to-blue-200 bg-fixed text-slate-800 font-sans min-h-screen pt-[70px] md:pt-[100px]">
+    <header
+        class="fixed top-0 left-0 w-full h-[70px] md:h-[100px] bg-white z-50 flex items-center justify-center shadow-md px-4">
+        <img src="image.png" alt="KCLAS Header" class="h-[80%] md:h-[90%] w-auto object-contain">
+    </header>
+
+    <nav
+        class="bg-gradient-to-r from-primary to-primary-dark text-white py-3 shadow-lg sticky top-[70px] md:top-[100px] z-40">
+        <div class="max-w-7xl mx-auto px-5 flex justify-between items-center flex-wrap gap-4">
+            <div class="flex items-center gap-2 md:gap-3">
+                <img src="KCLAS_Logo.jpg" alt="KCLAS Logo" class="h-12 md:h-20 rounded shadow-sm">
+                <div>
+                    <h1 class="text-lg md:text-2xl font-bold m-0 leading-tight">Exam Cell</h1>
+                    <span class="text-[10px] md:text-xs text-blue-200 block mt-0.5">Admin Dashboard</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="examStatusBadge"
+                    class="hidden px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-opacity-30 bg-white bg-opacity-10">
+                    Live</div>
+                <span id="userInfo" class="text-sm text-blue-100 font-semibold">👤 Admin</span>
+                <button id="logoutBtn" onclick="handleLogout()"
+                    class="bg-white bg-opacity-15 hover:bg-opacity-25 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all border border-white border-opacity-20">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-5 space-y-6">
+        <!-- Step 1: Create Exam -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200" id="examSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Create Exam</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="examDate" class="block mb-2 font-bold text-slate-800 text-sm">Exam Date</label>
+                    <input type="date" id="examDate" required
+                        class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50">
+                </div>
+                <div>
+                    <label for="examType" class="block mb-2 font-bold text-slate-800 text-sm">Exam Type</label>
+                    <select id="examType" required onchange="handleExamTypeChange()"
+                        class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50">
+                        <option value="">-- Select --</option>
+                        <option value="CIA">CIA</option>
+                        <option value="MODEL">MODEL</option>
+                    </select>
+                </div>
+            </div>
+            <button
+                class="bg-gradient-to-r from-primary to-primary-dark text-white px-5 py-2.5 rounded hover:scale-[1.02] hover:shadow-lg transition-all font-bold"
+                onclick="createExam()">Create Exam</button>
+            <div id="examStatus" class="mt-4 p-3 rounded text-sm hidden font-medium"></div>
+        </section>
+
+        <!-- Step 2: Upload Seating Plan -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden" id="seatingSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Upload Seating Plan</h2>
+            </div>
+
+            <!-- Single Input for Model Exams -->
+            <div id="modelUploadGroup" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                <div>
+                    <label for="seatingFileMODEL" class="block mb-2 font-bold text-slate-800 text-sm">Excel File (.xlsx,
+                        .xls)</label>
+                    <input type="file" id="seatingFileMODEL" accept=".xlsx,.xls"
+                        class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50 cursor-pointer text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-dark">
+                    <p class="text-xs text-slate-500 mt-2 block font-medium">Columns: Student Name, Reg Number, Roll
+                        Number, Dept, Year, Hall, Seat</p>
+                </div>
+            </div>
+
+            <!-- Dual Inputs for CIA Exams -->
+            <div id="ciaUploadGroup" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                <div>
+                    <label for="seatingFileFN" class="block mb-2 font-bold text-slate-800 text-sm">Forenoon (FN) Seating
+                        Plan</label>
+                    <input type="file" id="seatingFileFN" accept=".xlsx,.xls"
+                        class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50 cursor-pointer text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-dark">
+                    <p class="text-xs text-slate-500 mt-2 block font-medium">Upload the Excel sheet for FN session</p>
+                </div>
+                <div>
+                    <label for="seatingFileAN" class="block mb-2 font-bold text-slate-800 text-sm">Afternoon (AN)
+                        Seating Plan</label>
+                    <input type="file" id="seatingFileAN" accept=".xlsx,.xls"
+                        class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50 cursor-pointer text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-dark">
+                    <p class="text-xs text-slate-500 mt-2 block font-medium">Upload the Excel sheet for AN session</p>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <button
+                    class="bg-gradient-to-r from-primary to-primary-dark text-white px-5 py-2.5 rounded hover:scale-[1.02] hover:shadow-lg transition-all font-bold"
+                    onclick="uploadSeatingPlan()">Upload & Load</button>
+            </div>
+            <div id="uploadStatus" class="mt-4 p-3 rounded text-sm hidden font-medium"></div>
+        </section>
+
+        <!-- Step 3: Real-Time Dashboard -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden" id="dashboardSection">
+            <div
+                class="flex flex-col md:flex-row justify-between md:items-center mb-6 pb-4 border-b-2 border-primary gap-4">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Monitor Submissions</h2>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <select id="dashboardSession" onchange="refreshDashboard()"
+                        class="w-full md:w-[150px] p-2 border border-slate-300 rounded focus:outline-none focus:border-primary shadow-sm bg-blue-50/50 font-medium text-sm">
+                        <!-- Dynamic -->
+                    </select>
+                    <span class="text-[10px] text-slate-500 italic font-medium">Auto-refresh: 5s</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto my-5 rounded border border-slate-200 shadow-sm">
+                <table class="w-full border-collapse text-sm text-left">
+                    <thead class="bg-slate-700 text-white">
+                        <tr>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Hall</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Total</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Present</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Absent</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Status</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Faculty Name</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Submission Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTable"
+                        class="[&>tr:nth-child(even)]:bg-blue-50/50 [&>tr:hover]:bg-slate-100 divide-y divide-slate-200 font-medium text-slate-700">
+                        <tr>
+                            <td colspan="7" class="text-center text-slate-500 italic p-5">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-5 p-5 bg-blue-50/50 rounded border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-center gap-5">
+                    <span class="font-bold text-slate-800 uppercase tracking-wide text-sm">All Halls Submitted:</span>
+                    <span id="allSubmittedStatus"
+                        class="font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full text-sm border border-green-200">Waiting...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3.5: Department Monitoring -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden"
+            id="deptMonitorSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Department Attendance Monitor (Live)</h2>
+            </div>
+            <div class="max-w-[300px] mb-6">
+                <label for="deptSelect" class="block mb-2 font-bold text-slate-800 text-sm">Select Department</label>
+                <select id="deptSelect" onchange="updateDeptMonitor()"
+                    class="w-full p-3 border border-slate-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-blue-50/50 font-medium">
+                    <option value="">-- Select Department --</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto my-5 rounded border border-slate-200 shadow-sm">
+                <table class="w-full border-collapse text-sm text-left">
+                    <thead class="bg-slate-700 text-white">
+                        <tr>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Year</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Total Students</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Present</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Absent</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deptTable"
+                        class="[&>tr:nth-child(even)]:bg-blue-50/50 [&>tr:hover]:bg-slate-100 divide-y divide-slate-200 font-medium text-slate-700">
+                        <tr>
+                            <td colspan="5" class="text-center text-slate-500 italic p-5">Select a department to see
+                                data</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Step 3.6: Absentees Section -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden" id="absenteesSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Absent Students</h2>
+            </div>
+            <div class="overflow-x-auto my-5 rounded border border-slate-200 shadow-sm">
+                <table class="w-full border-collapse text-sm text-left">
+                    <thead class="bg-slate-700 text-white">
+                        <tr>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Register No</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Name</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Year</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Hall</th>
+                            <th class="p-4 border-b border-slate-600 font-semibold tracking-wide">Seat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="absenteesTable"
+                        class="[&>tr:nth-child(even)]:bg-blue-50/50 [&>tr:hover]:bg-slate-100 divide-y divide-slate-200 font-medium text-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Step 4: Generate Reports -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden" id="reportsSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Generate Reports</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
+                <div
+                    class="p-5 border border-slate-200 rounded-lg bg-blue-50/50 flex flex-col items-start gap-3 shadow-sm">
+                    <label for="reportSession" class="block font-bold text-slate-800 text-sm">Session</label>
+                    <select id="reportSession" onchange="loadClasses()"
+                        class="w-full p-2.5 border border-slate-300 rounded focus:outline-none focus:border-primary shadow-sm bg-white font-medium">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div class="p-5 border border-slate-200 rounded-lg bg-blue-50/50 shadow-sm">
+                    <h3 class="mt-0 mb-4 text-slate-800 font-bold text-base border-b border-slate-200 pb-2">PDF Reports
+                    </h3>
+                    <div class="space-y-3">
+                        <button
+                            class="bg-slate-700 hover:bg-slate-800 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('hall', 'pdf')">Hall PDF</button>
+                        <button
+                            class="bg-slate-700 hover:bg-slate-800 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('department', 'pdf')">Dept PDF</button>
+                        <button
+                            class="bg-slate-700 hover:bg-slate-800 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('overall', 'pdf')">Overall PDF</button>
+                    </div>
+                </div>
+                <div class="p-5 border border-slate-200 rounded-lg bg-blue-50/50 shadow-sm">
+                    <h3 class="mt-0 mb-4 text-slate-800 font-bold text-base border-b border-slate-200 pb-2">Excel
+                        Reports</h3>
+                    <div class="space-y-3">
+                        <button
+                            class="bg-green-600 hover:bg-green-700 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('hall', 'excel')">Hall Excel</button>
+                        <button
+                            class="bg-green-600 hover:bg-green-700 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('department', 'excel')">Dept Excel</button>
+                        <button
+                            class="bg-green-600 hover:bg-green-700 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('overall', 'excel')">Overall Excel</button>
+                    </div>
+                </div>
+                <div class="p-5 border border-slate-200 rounded-lg bg-blue-50/50 shadow-sm">
+                    <h3 class="mt-0 mb-4 text-slate-800 font-bold text-base border-b border-slate-200 pb-2">Class-wise
+                        Reports</h3>
+                    <div class="mb-4">
+                        <select id="classSelect"
+                            class="w-full p-2.5 border border-slate-300 rounded focus:outline-none focus:border-primary shadow-sm bg-white font-medium text-sm">
+                            <option value="">-- Load Seating First --</option>
+                        </select>
+                    </div>
+                    <div class="space-y-3">
+                        <button
+                            class="bg-slate-700 hover:bg-slate-800 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('class', 'pdf')">Class PDF</button>
+                        <button
+                            class="bg-green-600 hover:bg-green-700 text-white w-full py-2.5 rounded text-sm font-semibold shadow transition-colors"
+                            onclick="downloadReport('class', 'excel')">Class Excel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Finalize & Close -->
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 hidden" id="finalizeSection">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+                <h2 class="text-xl font-bold text-slate-800 m-0">Finalize Exam</h2>
+            </div>
+            <p class="text-sm font-medium text-slate-500 mb-6 block bg-blue-50/50 p-3 rounded border border-slate-100">
+                Finalizing will lock all submissions. Ensure all halls have submitted their attendance first.
+            </p>
+            <div class="flex gap-4 items-center">
+                <button id="finalizeBtn"
+                    class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded hover:scale-[1.02] hover:shadow-lg transition-all font-bold"
+                    onclick="finalizeExam()">Finalize Attendance</button>
+                <button id="resetNewExamBtn"
+                    class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded hover:scale-[1.02] hover:shadow-lg transition-all font-bold hidden"
+                    onclick="startNewExam()">Start New Exam Cycle</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Need to update JS with these changes so it uses proper Tailwind classes instead of custom ones for success messages etc. -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Override the showMessage function here so we don't need to rewrite it in app.js
+        const originalShowMessage = window.showMessage;
+        window.showMessage = function (elementId, message, type) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = message;
+            el.style.display = 'block';
+            el.className = 'mt-4 p-3 rounded text-sm block border font-medium ';
+            if (type === 'success') {
+                el.classList.add('bg-[#003594]', 'text-white', 'border-blue-800', 'shadow-md');
+            } else if (type === 'error') {
+                el.classList.add('bg-red-50', 'text-red-800', 'border-red-200');
+            } else {
+                el.classList.add('bg-blue-50', 'text-blue-800', 'border-blue-200');
+            }
+            if (type === "success") {
+                setTimeout(() => { el.style.display = "none"; }, 5000);
+            }
+        };
+
+        // Logout handler
+        async function handleLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+            const token = sessionStorage.getItem('auth_token');
+            try {
+                await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'X-Auth-Token': token || '' }
+                });
+            } catch (e) { }
+            sessionStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_role');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+
+</html>

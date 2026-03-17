@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Seat — KCLAS Exam Cell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { primary: '#003594', 'primary-light': '#004dc5', 'primary-dark': '#001d51' } }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #7be7ff 0%, #E6F0FF 100%) fixed !important;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-br from-sky-100 to-blue-200 bg-fixed text-slate-800 font-sans min-h-screen flex flex-col pt-[60px] md:pt-[70px]">
+    <header
+        class="fixed top-0 left-0 w-full h-[60px] md:h-[70px] bg-white z-50 flex flex-col justify-center items-center shadow-md py-1 px-4">
+        <img src="image.png" alt="KCLAS Logo" class="h-10 md:h-16 object-contain">
+    </header>
+
+    <div class="flex-1 w-full max-w-lg mx-auto p-5 mt-10">
+        <div
+            class="bg-white bg-opacity-95 backdrop-blur-md p-8 md:p-10 rounded-3xl shadow-2xl border border-white border-opacity-50 animate-[fadeUp_0.6s_ease-out]">
+            <div class="text-center mb-6 md:mb-8">
+                <img src="KCLAS_Logo.jpg" alt="KCLAS" class="h-12 md:h-16 mx-auto mb-4 rounded-lg">
+                <h1 class="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">Find Your Seat</h1>
+                <p class="text-slate-500 text-sm md:text-base">Enter your Register Number to find your examination
+                    venue.</p>
+            </div>
+
+            <div class="mb-6">
+                <label for="regNumber"
+                    class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Register Number</label>
+                <input type="text" id="regNumber" placeholder="e.g. 21BCA001" autocomplete="off"
+                    onkeyup="if(event.key==='Enter') findSeat()"
+                    class="w-full p-4 text-lg border-2 border-slate-200 rounded-xl outline-none transition-all bg-sky-50/50 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary focus:ring-opacity-10 shadow-sm">
+            </div>
+
+            <button
+                class="w-full p-4 bg-primary text-white rounded-xl text-lg font-bold flex justify-center items-center gap-3 hover:bg-primary-light hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                onclick="findSeat()">
+                <span>Search Seat</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <div id="errorMsg"
+                class="hidden mt-5 p-4 bg-red-50 text-red-500 border border-red-200 rounded-xl text-center font-semibold text-sm">
+            </div>
+
+            <div id="results" class="hidden mt-8 pt-6 border-t-2 border-dashed border-slate-200">
+                <div class="text-center mb-5">
+                    <div id="studentName" class="font-extrabold text-xl text-primary mb-1"></div>
+                    <div id="studentReg" class="text-slate-500 font-semibold text-sm"></div>
+                </div>
+                <!-- Sessions list container -->
+                <div id="sessionsList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="p-6 text-center text-sm font-medium text-slate-500">
+        &copy; 2026 KCLAS Exam Cell &bull; Made with ❤️ by Dept of Data Science
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="seat_finder.js"></script>
+    <style>
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+
+</html>
