@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invigilator Portal — Exam Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { primary: '#003594', 'primary-dark': '#00266b' } }
+            }
+        }
+    </script>
+    <style>
+        .hidden {
+            display: none !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #7be7ff 0%, #E6F0FF 100%) fixed !important;
+        }
+
+        th,
+        td {
+            padding: 1.25rem 1rem !important;
+            /* Larger rows for better touch and visibility */
+        }
+    </style>
+    <script>
+            // Auth guard — redirect to login if not authenticated as invigilator
+            (function () {
+                const token = sessionStorage.getItem('auth_token');
+                const role = sessionStorage.getItem('auth_role');
+                if (!token || role !== 'invigilator') {
+                    window.location.href = '/invigilator-login';
+                }
+            })();
+    </script>
+</head>
+
+<body
+    class="bg-gradient-to-br from-sky-100 to-blue-200 bg-fixed text-slate-800 font-sans min-h-screen pt-[70px] md:pt-[100px]">
+    <header
+        class="fixed top-0 left-0 w-full h-[70px] md:h-[100px] bg-white z-50 flex items-center justify-center shadow-md px-4">
+        <img src="/assets/image.png" alt="KCLAS Header" class="h-[80%] md:h-[90%] w-auto object-contain">
+    </header>
+
+    <nav
+        class="bg-gradient-to-r from-primary to-primary-dark text-white py-2 md:py-3 shadow-lg sticky top-[70px] md:top-[100px] z-40">
+        <div class="max-w-7xl mx-auto px-5 flex justify-between items-center flex-wrap gap-2">
+            <div class="flex items-center gap-2 md:gap-3">
+                <img src="/assets/KCLAS_Logo.jpg" alt="KCLAS Logo" class="h-10 md:h-20 rounded shadow-sm">
+                <div>
+                    <h1 class="text-lg md:text-2xl font-bold m-0 leading-tight">Exam Attendance</h1>
+                    <span class="text-[10px] md:text-xs text-blue-200 block mt-0.5 font-medium">Invigilator
+                        Portal</span>
+                </div>
+            </div>
+            <div id="examStatusBadge"
+                class="hidden px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-opacity-30 bg-white bg-opacity-20 text-white">
+                Live</div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-blue-100 font-semibold">👤 Invigilator</span>
+                <button onclick="handleLogout()"
+                    class="bg-white bg-opacity-15 hover:bg-opacity-25 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all border border-white border-opacity-20">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-5 space-y-6 mt-4">
+        <!-- ── ACTIVE EXAM INFO ────────────────────────────────────────── -->
+        <div id="activeExamInfo"
+            class="hidden bg-white border-l-4 border-primary p-4 rounded-r-lg text-slate-800 shadow-sm flex items-center">
+            <span class="font-bold text-sm tracking-wide text-primary">Active Exam:</span>
+            <span id="displayExamDate" class="ml-3 font-semibold text-slate-700"></span>
+            <span class="mx-3 text-slate-300 font-bold">|</span>
+            <span id="displayExamType" class="font-semibold text-slate-700"></span>
+        </div>
+
+        <!-- ── WAITING STATE ────────────────────────────────────────────── -->
+        <div id="waitingState"
+            class="bg-white p-10 md:p-16 rounded-2xl shadow-lg border border-slate-100 text-center container mx-auto transform transition duration-500 hover:-translate-y-1">
+            <div class="text-7xl mb-6">🕒</div>
+            <h2 class="text-3xl font-extrabold text-primary mb-4 tracking-tight">Waiting for Admin</h2>
+            <p class="text-slate-500 max-w-lg mx-auto mb-8 font-medium leading-relaxed">
+                There is no active examination session at the moment.
+                Please wait for the administrator to activate a session.
+            </p>
+            <button
+                class="bg-gradient-to-r from-primary to-primary-dark text-white px-8 py-3.5 rounded-lg hover:scale-[1.03] hover:shadow-xl transition-all font-bold text-lg"
+                onclick="location.reload()">Check Again</button>
+        </div>
+
+        <!-- ── INVIGILATOR FORM ────────────────────────────────────────────── -->
+        <section
+            class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden transform transition duration-500 hover:shadow-2xl hidden"
+            id="invigilatorPanel">
+            <!-- Step 1: Selection -->
+            <div id="selectionStep" class="p-8 md:p-10">
+                <div class="mb-8 pb-5 border-b border-slate-200">
+                    <div
+                        class="inline-block bg-primary text-white text-xs font-extrabold tracking-widest px-3 py-1 rounded mb-3">
+                        STEP 1</div>
+                    <h2 class="text-2xl font-bold text-slate-800 m-0 tracking-tight">Select Your Hall</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                    <div>
+                        <label for="facultyName" class="block mb-2 font-bold text-slate-700 text-sm">Your Name
+                            (Invigilator)</label>
+                        <input type="text" id="facultyName" placeholder="e.g. Dr. Priya Shankar" maxlength="100"
+                            class="w-full p-4 text-base border-2 border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white bg-blue-50/50 transition-colors shadow-sm font-medium">
+                    </div>
+                    <div>
+                        <label for="hallSession" class="block mb-2 font-bold text-slate-700 text-sm">Exam
+                            Session</label>
+                        <select id="hallSession" onchange="initHalls()"
+                            class="w-full p-4 text-base border-2 border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white bg-blue-50/50 transition-colors shadow-sm font-medium">
+                            <option value="FN">Forenoon (FN)</option>
+                            <option value="AN">Afternoon (AN)</option>
+                            <option value="MODEL">Model Session</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="hallSelect" class="block mb-2 font-bold text-slate-700 text-sm">Hall Number</label>
+                        <select id="hallSelect" onchange="onHallChange()"
+                            class="w-full p-4 text-base border-2 border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white bg-blue-50/50 transition-colors shadow-sm font-medium">
+                            <option value="">— Select Hall —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="hallStatusMsg" class="hidden p-4 rounded-lg text-sm font-medium mb-6"></div>
+
+                <div>
+                    <button
+                        class="w-full bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4 rounded-xl hover:scale-[1.01] hover:shadow-xl transition-all font-bold text-lg tracking-wide flex justify-center items-center gap-2"
+                        onclick="proceedToAttendance()">
+                        Proceed to Mark Attendance →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Attendance table -->
+            <div id="attendanceStep" class="p-8 md:p-10 hidden">
+                <div
+                    class="mb-8 pb-5 border-b border-slate-200 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                    <div>
+                        <div
+                            class="inline-block bg-primary text-white text-xs font-extrabold tracking-widest px-3 py-1 rounded mb-3">
+                            STEP 2</div>
+                        <h2 class="text-2xl font-bold text-slate-800 m-0 tracking-tight">Mark Attendance — Hall <span
+                                id="hallDisplay" class="text-primary bg-blue-50 px-2 py-0.5 rounded"></span></h2>
+                        <p class="text-slate-500 font-medium text-sm mt-2">✓ Check the box if the student is <strong
+                                class="text-red-500 font-extrabold uppercase bg-red-50 px-1 py-0.5 rounded">Absent</strong>
+                        </p>
+                    </div>
+                    <div
+                        class="bg-slate-100 px-5 py-3 rounded-lg font-bold text-slate-700 flex items-center gap-2 shadow-inner">
+                        <span class="text-sm uppercase tracking-wider text-slate-500">Absent:</span>
+                        <span class="text-xl">
+                            <strong id="absentCount" class="text-red-500 w-8 inline-block text-right">0</strong>
+                            <span class="text-slate-300 mx-1">/</span>
+                            <strong id="totalCount" class="w-8 inline-block text-left text-slate-800">0</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4 mb-6">
+                    <button
+                        class="bg-white border-2 border-red-500 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-50 hover:shadow transition-all"
+                        onclick="markAllAbsent()">Mark All Absent</button>
+                    <button
+                        class="bg-white border-2 border-green-500 text-green-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-50 hover:shadow transition-all"
+                        onclick="markAllPresent()">Mark All Present</button>
+                </div>
+
+                <div class="overflow-x-auto mb-8 rounded-xl border border-slate-200 shadow-sm">
+                    <table class="w-full border-collapse text-sm text-left">
+                        <thead class="bg-slate-800 text-white">
+                            <tr>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Seat</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Roll No</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Reg No</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Student Name</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Dept</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-slate-300">
+                                    Year</th>
+                                <th
+                                    class="p-4 border-b border-slate-700 font-bold tracking-wide uppercase text-xs text-red-300 text-center">
+                                    Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody"
+                            class="[&>tr:nth-child(even)]:bg-blue-50/50 [&>tr:hover]:bg-blue-50/50 divide-y divide-slate-200 transition-colors">
+                            <tr>
+                                <td colspan="7" class="text-center text-slate-400 font-medium italic p-8">Loading…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="submissionStatus" class="hidden p-4 rounded-lg text-sm font-medium mb-6"></div>
+
+                <div class="flex flex-col md:flex-row gap-5">
+                    <button
+                        class="flex-1 bg-green-600 text-white px-6 py-4 rounded-xl hover:bg-green-700 hover:shadow-xl transition-all font-bold text-lg tracking-wide flex justify-center items-center gap-2"
+                        onclick="submitAttendance()">
+                        <span class="text-xl">✓</span> Submit Attendance
+                    </button>
+                    <button
+                        class="bg-slate-200 text-slate-700 px-8 py-4 rounded-xl hover:bg-slate-300 transition-colors font-bold tracking-wide flex justify-center items-center gap-2"
+                        onclick="goBackToSelection()">
+                        ← Change Hall
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── SUCCESS CARD ───────────────────────────────────────────────── -->
+        <section
+            class="bg-gradient-to-br from-[#003594] to-[#00266b] p-12 rounded-3xl shadow-2xl border border-blue-800 text-center hidden transform transition duration-500 scale-100"
+            id="successPanel">
+            <div class="text-8xl mb-6 text-green-500 drop-shadow-sm animate-bounce">✓</div>
+            <h2 class="text-4xl font-extrabold text-white mb-8 tracking-tight">Attendance Submitted!</h2>
+            <div id="successDetails"
+                class="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-2xl text-white mb-10 space-y-3 text-lg font-medium inline-block text-left text-sm md:text-base border border-white border-opacity-20 mx-auto min-w-[280px]">
+            </div>
+            <div>
+                <button
+                    class="bg-white text-[#003594] px-10 py-4 rounded-xl hover:bg-blue-50 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all font-bold text-lg tracking-wide"
+                    onclick="resetInvigilatorView()">Close</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/invigilator.js"></script>
+    <script>
+        // Override showMessage
+        const originalShowMessage = window.showMessage;
+        window.showMessage = function (elementId, message, type) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove("hidden");
+            el.className = 'p-4 rounded-lg text-sm font-medium mb-6 border animate-[fadeIn_0.3s_ease-out] ';
+            if (type === 'success') {
+                el.classList.add('bg-[#003594]', 'text-white', 'border-blue-800', 'shadow-md');
+            } else if (type === 'error') {
+                el.classList.add('bg-red-50', 'text-red-800', 'border-red-200');
+            } else {
+                el.classList.add('bg-blue-50', 'text-blue-800', 'border-blue-200');
+            }
+            if (type === "success") {
+                setTimeout(() => { el.classList.add("hidden"); }, 5000);
+            }
+        };
+
+        // Logout handler
+        async function handleLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+            const token = sessionStorage.getItem('auth_token');
+            try {
+                await fetch(`${API}/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'X-Auth-Token': token || '' }
+                });
+            } catch (e) { }
+            sessionStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_role');
+            window.location.href = '/invigilator-login';
+        }
+    </script>
+</body>
+
+</html>
