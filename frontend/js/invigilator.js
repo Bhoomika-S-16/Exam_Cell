@@ -17,8 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // ─── SESSION CHECK ───────────────────────────────────────────────────────────
 
 async function checkExistingSession() {
+    const token = sessionStorage.getItem("auth_token");
     try {
-        const response = await fetch(`${API}/demo/status`);
+        const response = await fetch(`${API}/invigilator/status`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
         if (!response.ok) return;
         const data = await response.json();
 
@@ -113,8 +116,11 @@ async function initHalls() {
 
 async function loadHalls() {
     const session = document.getElementById("hallSession")?.value || "FN";
+    const token = sessionStorage.getItem("auth_token");
     try {
-        const res = await fetch(`${API}/invigilator/halls?session=${session}`);
+        const res = await fetch(`${API}/invigilator/halls?session=${session}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
         if (!res.ok) {
             showMessage("hallStatusMsg", "No active exam found for this session.", "error");
             const sel = document.getElementById("hallSelect");
@@ -158,9 +164,12 @@ async function proceedToAttendance() {
 
     // Load students for selected hall
     const session = document.getElementById("hallSession").value;
+    const token = sessionStorage.getItem("auth_token");
     showMessage("hallStatusMsg", "Loading students…", "info");
     try {
-        const res = await fetch(`${API}/invigilator/students/${currentHall}?session=${session}`);
+        const res = await fetch(`${API}/invigilator/students/${currentHall}?session=${session}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
         if (!res.ok) {
             const err = await res.json();
             showMessage("hallStatusMsg", err.detail || "Failed to load students.", "error");
@@ -255,12 +264,16 @@ async function submitAttendance() {
     if (!confirm(confirmMsg)) return;
 
     const session = document.getElementById("hallSession").value;
+    const token = sessionStorage.getItem("auth_token");
     showMessage("submissionStatus", "Submitting…", "info");
 
     try {
         const res = await fetch(`${API}/invigilator/attendance/submit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "X-Auth-Token": token || ''
+            },
             body: JSON.stringify({
                 session: session,
                 hall_number: currentHall,

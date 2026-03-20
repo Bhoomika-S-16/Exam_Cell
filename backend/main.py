@@ -501,6 +501,21 @@ def download_excel_report(
 # INVIGILATOR — ROUTES (no auth required)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@app.get("/api/invigilator/status")
+def get_invigilator_status(_token: str = Depends(require_invigilator)):
+    """Get current exam status for invigilator portal"""
+    return {
+        "exam_active": exam_state.is_created,
+        "seating_loaded": exam_state.seating_loaded,
+        "is_finalized": exam_state.is_finalized,
+        "exam": {
+            "date": exam_state.exam_date,
+            "type": exam_state.exam_type,
+            "active_sessions": list(exam_state.seating_plans.keys())
+        } if exam_state.is_created else None,
+    }
+
+
 @app.get("/api/invigilator/halls")
 def get_halls(session: str = Query("FN"), _token: str = Depends(require_invigilator)):
     """Get list of halls for invigilator"""

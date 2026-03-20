@@ -33,7 +33,7 @@
                 const token = sessionStorage.getItem('auth_token');
                 const role = sessionStorage.getItem('auth_role');
                 if (!token || role !== 'admin') {
-                    window.location.href = '/login';
+                    window.location.href = '/admin-login';
                 }
             })();
     </script>
@@ -43,14 +43,14 @@
     class="bg-gradient-to-br from-sky-100 to-blue-200 bg-fixed text-slate-800 font-sans min-h-screen pt-[70px] md:pt-[100px]">
     <header
         class="fixed top-0 left-0 w-full h-[70px] md:h-[100px] bg-white z-50 flex items-center justify-center shadow-md px-4">
-        <img src="image.png" alt="KCLAS Header" class="h-[80%] md:h-[90%] w-auto object-contain">
+        <img src="/assets/image.png" alt="KCLAS Header" class="h-[80%] md:h-[90%] w-auto object-contain">
     </header>
 
     <nav
         class="bg-gradient-to-r from-primary to-primary-dark text-white py-3 shadow-lg sticky top-[70px] md:top-[100px] z-40">
         <div class="max-w-7xl mx-auto px-5 flex justify-between items-center flex-wrap gap-4">
             <div class="flex items-center gap-2 md:gap-3">
-                <img src="KCLAS_Logo.jpg" alt="KCLAS Logo" class="h-12 md:h-20 rounded shadow-sm">
+                <img src="/assets/KCLAS_Logo.jpg" alt="KCLAS Logo" class="h-12 md:h-20 rounded shadow-sm">
                 <div>
                     <h1 class="text-lg md:text-2xl font-bold m-0 leading-tight">Exam Cell</h1>
                     <span class="text-[10px] md:text-xs text-blue-200 block mt-0.5">Admin Dashboard</span>
@@ -327,8 +327,8 @@
     </div>
 
     <!-- Need to update JS with these changes so it uses proper Tailwind classes instead of custom ones for success messages etc. -->
-    <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/app.js"></script>
     <script>
         // Override the showMessage function here so we don't need to rewrite it in app.js
         const originalShowMessage = window.showMessage;
@@ -362,7 +362,7 @@
             } catch (e) { }
             sessionStorage.removeItem('auth_token');
             sessionStorage.removeItem('auth_role');
-            window.location.href = '/login';
+            window.location.href = '/admin-login';
         }
     </script>
 </body>

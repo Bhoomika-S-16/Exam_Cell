@@ -69,7 +69,7 @@
         </div>
     </nav>
 
-    <div class="max-w-5xl mx-auto p-5 space-y-6 mt-4">
+    <div class="max-w-5xl mx-auto p-5 space-y-6 mt-4 page-wrapper">
         <!-- ── ACTIVE EXAM INFO ────────────────────────────────────────── -->
         <div id="activeExamInfo"
             class="hidden bg-white border-l-4 border-primary p-4 rounded-r-lg text-slate-800 shadow-sm flex items-center">
@@ -113,7 +113,7 @@
                         <input type="text" id="facultyName" placeholder="e.g. Dr. Priya Shankar" maxlength="100"
                             class="w-full p-4 text-base border-2 border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:bg-white bg-blue-50/50 transition-colors shadow-sm font-medium">
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label for="hallSession" class="block mb-2 font-bold text-slate-700 text-sm">Exam
                             Session</label>
                         <select id="hallSession" onchange="initHalls()"

@@ -51,8 +51,13 @@ function initAdminPage() {
 }
 
 async function checkSessionStatus() {
+    const token = sessionStorage.getItem("auth_token");
     try {
-        const response = await fetch(`${API_BASE}/admin/status`);
+        const response = await fetch(`${API_BASE}/admin/status`, {
+            headers: {
+                'X-Auth-Token': token || ''
+            }
+        });
 
         if (!response.ok) return;
 
@@ -159,6 +164,7 @@ function handleExamTypeChange() {
 }
 
 async function createExam() {
+    const token = sessionStorage.getItem("auth_token");
     const date = document.getElementById("examDate").value;
     const examType = document.getElementById("examType").value;
 
@@ -181,7 +187,8 @@ async function createExam() {
         const response = await fetch(`${API_BASE}/admin/exam/create`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-Auth-Token": token || ''
             },
             body: params.toString()
         });
@@ -206,6 +213,7 @@ async function createExam() {
 }
 
 async function uploadSeatingPlan() {
+    const token = sessionStorage.getItem("auth_token");
     const ciaGroup = document.getElementById("ciaUploadGroup");
     const isCIA = ciaGroup && !ciaGroup.classList.contains("hidden");
 
@@ -235,6 +243,9 @@ async function uploadSeatingPlan() {
 
             const response = await fetch(`${API_BASE}/admin/seating-plan/upload`, {
                 method: "POST",
+                headers: {
+                    'X-Auth-Token': token || ''
+                },
                 body: formData
             });
 
@@ -269,8 +280,11 @@ async function uploadSeatingPlan() {
 
 async function refreshDashboard() {
     const session = document.getElementById("dashboardSession")?.value || "";
+    const token = sessionStorage.getItem("auth_token");
     try {
-        const response = await fetch(`${API_BASE}/admin/dashboard?session=${session}`);
+        const response = await fetch(`${API_BASE}/admin/dashboard?session=${session}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) return;
 
@@ -389,8 +403,11 @@ async function viewAbsentees(department, year) {
     if (heading) heading.textContent = `Absent Students — ${department} Year ${year}`;
 
     try {
+        const token = sessionStorage.getItem("auth_token");
         const url = `${API_BASE}/admin/absentees?department=${encodeURIComponent(department)}&year=${encodeURIComponent(year)}&session=${encodeURIComponent(session)}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
@@ -431,7 +448,10 @@ async function loadClasses() {
     if (!session) return;
 
     try {
-        const response = await fetch(`${API_BASE}/admin/classes?session=${session}`);
+        const token = sessionStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE}/admin/classes?session=${session}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) return;
 
@@ -467,7 +487,10 @@ async function downloadReport(reportType, format) {
             endpoint += `&filter_value=${encodeURIComponent(cls)}`;
         }
 
-        const response = await fetch(`${API_BASE}${endpoint}`);
+        const token = sessionStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) {
             const error = await response.json();
@@ -503,8 +526,10 @@ async function finalizeExam() {
     }
 
     try {
+        const token = sessionStorage.getItem("auth_token");
         const response = await fetch(`${API_BASE}/admin/exam/finalize`, {
-            method: "POST"
+            method: "POST",
+            headers: { 'X-Auth-Token': token || '' }
         });
 
         if (!response.ok) {
@@ -535,8 +560,10 @@ async function startNewExam() {
     }
 
     try {
+        const token = sessionStorage.getItem("auth_token");
         const response = await fetch(`${API_BASE}/admin/exam/reset`, {
-            method: "POST"
+            method: "POST",
+            headers: { 'X-Auth-Token': token || '' }
         });
 
         if (!response.ok) {
@@ -573,7 +600,10 @@ async function logout() {
 
 async function initInvigilatorPage() {
     try {
-        const response = await fetch(`${API_BASE}/invigilator/halls`);
+        const token = sessionStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE}/invigilator/halls`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) {
             showMessage("selectionStatus", "No active exam. Please contact admin.", "error");
@@ -622,7 +652,10 @@ async function loadHallStudents() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/invigilator/students/${currentHall}`);
+        const token = sessionStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE}/invigilator/students/${currentHall}`, {
+            headers: { 'X-Auth-Token': token || '' }
+        });
 
         if (!response.ok) {
             throw new Error("Failed to load students");
@@ -717,9 +750,13 @@ async function submitAttendance() {
     }
 
     try {
+        const token = sessionStorage.getItem("auth_token");
         const response = await fetch(`${API_BASE}/invigilator/attendance/submit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "X-Auth-Token": token || ''
+            },
             body: JSON.stringify({
                 hall_number: currentHall,
                 faculty_name: facultyName,
