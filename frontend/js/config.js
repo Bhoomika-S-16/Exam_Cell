@@ -3,7 +3,7 @@
  */
 const CONFIG = {
     // Current environment - set to 'prod' for Cloudflare deployment
-    ENV: 'dev',
+    ENV: 'prod',
 
     // API base URL
     API_BASE: {

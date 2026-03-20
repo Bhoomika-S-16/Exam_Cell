@@ -4,9 +4,6 @@ primary_region = "iad"
 [env]
   DATABASE_URL = "sqlite:////data/app.db"
 
-[build]
-  builder = "paketobuildpacks/builder:base"
-
 [mounts]
   source = "exam_data"
   destination = "/data"
