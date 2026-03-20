@@ -62,6 +62,13 @@ def init_db():
                 session_id TEXT
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                role TEXT,
+                expiry REAL
+            )
+        ''')
     conn.close()
 
 init_db()
@@ -470,6 +477,50 @@ class ExamState:
             self.reset()
             return True
         return False
+
+    # ── Session Management ──
+
+    def save_token(self, token: str, role: str, expiry: float) -> None:
+        with self._lock:
+            conn = get_db()
+            with conn:
+                conn.execute(
+                    "INSERT OR REPLACE INTO sessions (token, role, expiry) VALUES (?, ?, ?)",
+                    (token, role, expiry)
+                )
+            conn.close()
+
+    def verify_token_db(self, token: str) -> dict | None:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT role, expiry FROM sessions WHERE token = ?",
+            (token,)
+        ).fetchone()
+        conn.close()
+        
+        if not row:
+            return None
+            
+        import time
+        if time.time() > row['expiry']:
+            self.revoke_token_db(token)
+            return None
+            
+        return {"role": row['role']}
+
+    def revoke_token_db(self, token: str) -> None:
+        with self._lock:
+            conn = get_db()
+            with conn:
+                conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+            conn.close()
+
+    def clear_tokens_db(self) -> None:
+        with self._lock:
+            conn = get_db()
+            with conn:
+                conn.execute("DELETE FROM sessions")
+            conn.close()
 
 
 exam_state = ExamState()

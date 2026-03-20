@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Annotated
-from fastapi import FastAPI, HTTPException, Header, UploadFile, File, Form, Query, Request
+from fastapi import FastAPI, HTTPException, Header, UploadFile, File, Form, Query, Request, Depends
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,17 +63,12 @@ except ImportError as e:
 app = FastAPI(title="Exam Attendance System", version="1.0.0")
 
 # CORS — allow specific origins for local development and cloud use
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "*")
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:5500",
-        "http://127.0.0.1:5000",
-        "http://localhost:5501",
-        "http://127.0.0.1:5501",
-        "*"  # Fallback for other origins
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,  # Allow credentials
     allow_methods=["*"],
     allow_headers=["*"],  # Allow all headers including X-Auth-Token
@@ -115,13 +110,13 @@ else:
 
 # ── Day-reset middleware ───────────────────────────────────────────────────────
 
-@app.middleware("http")
-async def day_reset_middleware(request: Request, call_next):
-    """Automatically reset exam state if the day has changed."""
-    if exam_state.check_day_reset():
-        clear_all_tokens()
-    response = await call_next(request)
-    return response
+# @app.middleware("http")
+# async def day_reset_middleware(request: Request, call_next):
+#     """Automatically reset exam state if the day has changed."""
+#     if exam_state.check_day_reset():
+#         clear_all_tokens()
+#     response = await call_next(request)
+#     return response
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -213,6 +208,7 @@ def health():
 def create_exam(
     date: str = Form(...),
     exam_type: str = Form(...),
+    _token: str = Depends(require_admin)
 ):
     """Create a new exam session"""
     print(f"[DEBUG] Received create_exam request: date={date}, exam_type={exam_type}")
@@ -247,6 +243,7 @@ def create_exam(
 async def upload_seating_plan(
     file: UploadFile = File(...),
     session: str = Form("MODEL"),
+    _token: str = Depends(require_admin)
 ):
     """Upload and parse seating plan Excel file"""
     print(f"[DEBUG] Seating plan upload: file={file.filename}, session={session}")
@@ -308,7 +305,7 @@ async def upload_seating_plan(
 
 # ═══════════════════════════════════════════════════════════════════════════════
 @app.get("/api/admin/status")
-def get_exam_status():
+def get_exam_status(_token: str = Depends(require_admin)):
     """Get current exam status"""
     return {
         "is_created": exam_state.is_created,
@@ -324,7 +321,7 @@ def get_exam_status():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/api/admin/dashboard")
-def get_dashboard(session: str = Query(None)):
+def get_dashboard(session: str = Query(None), _token: str = Depends(require_admin)):
     """Get dashboard data for a session"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -337,7 +334,7 @@ def get_dashboard(session: str = Query(None)):
 
 
 @app.get("/api/admin/classes")
-def get_classes(session: str = Query(...)):
+def get_classes(session: str = Query(...), _token: str = Depends(require_admin)):
     """Get list of classes for a session"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -355,7 +352,8 @@ def get_classes(session: str = Query(...)):
 def get_absentees(
     department: str = Query(...),
     year: str = Query(...),
-    session: str = Query(...)
+    session: str = Query(...),
+    _token: str = Depends(require_admin)
 ):
     results = []
 
@@ -390,7 +388,7 @@ def get_absentees(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/admin/exam/finalize")
-def finalize_exam():
+def finalize_exam(_token: str = Depends(require_admin)):
     """Finalize the exam and lock submissions"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -408,7 +406,7 @@ def finalize_exam():
 
 
 @app.post("/api/admin/exam/reset")
-def reset_exam():
+def reset_exam(_token: str = Depends(require_admin)):
     """Reset exam state entirely"""
     try:
         exam_state.reset()
@@ -428,6 +426,7 @@ def download_pdf_report(
     session: str = Query(...),
     report_type: str = Query("overall"),
     filter_value: str = Query(None),
+    _token: str = Depends(require_admin)
 ):
     """Generate and download PDF report"""
     if not exam_state.is_created:
@@ -465,6 +464,7 @@ def download_excel_report(
     session: str = Query(...),
     report_type: str = Query("overall"),
     filter_value: str = Query(None),
+    _token: str = Depends(require_admin)
 ):
     """Generate and download Excel report"""
     if not exam_state.is_created:
@@ -502,7 +502,7 @@ def download_excel_report(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/api/invigilator/halls")
-def get_halls(session: str = Query("FN")):
+def get_halls(session: str = Query("FN"), _token: str = Depends(require_invigilator)):
     """Get list of halls for invigilator"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -532,7 +532,7 @@ def get_halls(session: str = Query("FN")):
 
 
 @app.get("/api/invigilator/students/{hall_number}")
-def get_hall_students(hall_number: str, session: str = Query("FN")):
+def get_hall_students(hall_number: str, session: str = Query("FN"), _token: str = Depends(require_invigilator)):
     """Get student list for a specific hall"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -583,7 +583,7 @@ class AttendanceSubmission(BaseModel):
 
 
 @app.post("/api/invigilator/attendance/submit")
-def submit_attendance(payload: AttendanceSubmission):
+def submit_attendance(payload: AttendanceSubmission, _token: str = Depends(require_invigilator)):
     """Submit attendance for a hall"""
     if not exam_state.is_created:
         raise HTTPException(status_code=400, detail="No active exam")
@@ -684,109 +684,6 @@ def student_lookup(reg_num: str):
     except Exception as e:
         print(f"[ERROR] Student lookup failed: {e}")
         raise HTTPException(status_code=500, detail=f"Lookup failed: {str(e)}")
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# DEMO / TESTING — No auth required (for invigilator page testing)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/demo/setup-exam")
-def demo_setup_exam(
-    date: str = Form(None),
-    exam_type: str = Form("CIA"),
-):
-    """Create a demo exam session without admin authentication."""
-    import datetime
-    if not date:
-        date = datetime.date.today().isoformat()
-
-    if exam_type not in ("CIA", "MODEL"):
-        raise HTTPException(status_code=400, detail="exam_type must be CIA or MODEL")
-
-    try:
-        exam_state.create_exam(date, exam_type)
-        return {
-            "message": "Demo exam created",
-            "date": date,
-            "type": exam_type,
-        }
-    except Exception as e:
-        print(f"[ERROR] Demo setup failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Setup failed: {str(e)}")
-
-
-@app.post("/api/demo/upload-seating")
-async def demo_upload_seating(
-    file: UploadFile = File(...),
-    session: str = Form("MODEL")
-):
-    """Upload seating plan Excel without admin authentication (demo mode)."""
-    if not exam_state.is_created:
-        raise HTTPException(status_code=400, detail="Create a demo exam first via /api/demo/setup-exam")
-
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file provided")
-
-    if not (file.filename.endswith(".xlsx") or file.filename.endswith(".xls")):
-        raise HTTPException(status_code=400, detail="Only .xlsx or .xls files accepted")
-
-    try:
-        file_bytes = await file.read()
-        students, errors = parse_seating_plan(file_bytes)
-
-        if errors:
-            raise HTTPException(status_code=400, detail={"message": "Validation failed", "errors": errors})
-
-        result = exam_state.load_seating_plan(students, session)
-        return {
-            "message": f"Demo seating plan for {session} loaded successfully",
-            **result,
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[ERROR] Demo upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-
-@app.get("/api/demo/status")
-def demo_status():
-    """Get current exam/demo state (for invigilator page polling)."""
-    return {
-        "exam_active": exam_state.is_created,
-        "seating_loaded": exam_state.seating_loaded,
-        "is_finalized": exam_state.is_finalized,
-        "exam": {
-            "date": exam_state.exam_date,
-            "type": exam_state.exam_type,
-            "active_sessions": list(exam_state.seating_plans.keys())
-        } if exam_state.is_created else None,
-    }
-
-
-@app.post("/api/demo/reset")
-def demo_reset():
-    """Reset exam state entirely (demo/testing use only)."""
-    try:
-        exam_state.reset()
-        clear_all_tokens()
-        return {"message": "Demo state reset successfully"}
-    except Exception as e:
-        print(f"[ERROR] Demo reset failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
-
-
-@app.get("/api/demo/sample-excel")
-def demo_sample_excel():
-    """Download a pre-built sample seating plan Excel for testing."""
-    sample_path = FRONTEND_DIR / "sample_seating.xlsx"
-    if not sample_path.exists():
-        raise HTTPException(status_code=404, detail="Sample file not found")
-    return FileResponse(
-        path=str(sample_path),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        filename="sample_seating.xlsx",
-    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

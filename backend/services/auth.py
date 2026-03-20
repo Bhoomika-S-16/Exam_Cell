@@ -5,24 +5,25 @@ Role-based token auth for admin and invigilator access.
 
 import uuid
 import time
+import os
+from core.state import exam_state
 
-# ── Credentials (change in production!) ────────────────────────────────────────
+# ── Credentials (read from environment in production) ──────────────────────────
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+INVIGILATOR_PASSWORD = os.environ.get("INVIGILATOR_PASSWORD", "invig123")
+
 CREDENTIALS = {
     "admin": {
         "username": "admin",
-        "password": "admin123",
+        "password": ADMIN_PASSWORD,
         "role": "admin",
     },
     "invigilator": {
         "username": "invigilator",
-        "password": "invig123",
+        "password": INVIGILATOR_PASSWORD,
         "role": "invigilator",
     },
 }
-
-# ── Token Store ────────────────────────────────────────────────────────────────
-# { token_string: { "role": str, "expiry": float } }
-_active_tokens: dict[str, dict] = {}
 
 TOKEN_EXPIRY_HOURS = 12
 
@@ -32,10 +33,8 @@ def login(username: str, password: str) -> dict | None:
     for _key, cred in CREDENTIALS.items():
         if username == cred["username"] and password == cred["password"]:
             token = uuid.uuid4().hex
-            _active_tokens[token] = {
-                "role": cred["role"],
-                "expiry": time.time() + TOKEN_EXPIRY_HOURS * 3600,
-            }
+            expiry = time.time() + TOKEN_EXPIRY_HOURS * 3600
+            exam_state.save_token(token, cred["role"], expiry)
             return {"token": token, "role": cred["role"]}
     return None
 
@@ -44,13 +43,7 @@ def verify_token(token: str) -> dict | None:
     """Check whether a token is valid and not expired. Returns role info or None."""
     if not token:
         return None
-    info = _active_tokens.get(token)
-    if info is None:
-        return None
-    if time.time() > info["expiry"]:
-        _active_tokens.pop(token, None)
-        return None
-    return {"role": info["role"]}
+    return exam_state.verify_token_db(token)
 
 
 def verify_admin_token(token: str) -> bool:
@@ -67,9 +60,9 @@ def verify_invigilator_token(token: str) -> bool:
 
 def revoke_token(token: str) -> None:
     """Remove a token (logout)."""
-    _active_tokens.pop(token, None)
+    exam_state.revoke_token_db(token)
 
 
 def clear_all_tokens() -> None:
     """Revoke every active token (used on daily reset)."""
-    _active_tokens.clear()
+    exam_state.clear_tokens_db()
